@@ -1,0 +1,11 @@
+{
+  "title": "Threat Nexus",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Requests",
+      "targets": [{"expr": "http_requests_total"}]
+    }
+  ]
+}

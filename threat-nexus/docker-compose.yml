@@ -1,0 +1,43 @@
+services:
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: ["mongo-data:/data/db"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  api-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    env_file: .env
+    depends_on: [mongo, redis]
+    ports: ["8000:8000"]
+  scheduler-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    env_file: .env
+    depends_on: [redis, mongo]
+    command: celery -A apps.scheduler.celery_app.celery_app worker -B --loglevel=INFO
+  discord-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    env_file: .env
+    depends_on: [api-service]
+    command: python -m apps.discord_bot.main
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports: ["3000:3000"]
+  prometheus:
+    image: prom/prometheus
+    volumes: ["./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana
+    ports: ["3001:3000"]
+volumes:
+  mongo-data:
