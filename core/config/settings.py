@@ -1,19 +1,26 @@
+import secrets
+import warnings
 from functools import lru_cache
-from pydantic import Field
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", env_ignore_empty=True
+    )
 
     app_name: str = "Threat Nexus"
     app_env: str = "development"
-    api_host: str = "0.0.0.0"
+    api_host: str = "127.0.0.1"
     api_port: int = 8000
     mongodb_uri: str = "mongodb://localhost:27017"
     mongodb_database: str = "threat_nexus"
     redis_url: str = "redis://localhost:6379/0"
-    jwt_secret: str = Field(default="change-me-with-a-32-byte-secret", min_length=16)
+    jwt_secret: str | None = Field(default=None, min_length=32)
+    admin_username: str | None = None
+    admin_password: str | None = Field(default=None, min_length=12, max_length=72)
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 60
     cors_origins: list[str] = ["http://localhost:3000"]
@@ -72,6 +79,19 @@ class Settings(BaseSettings):
     bleepingcomputer_enabled: bool = True
     the_hacker_news_enabled: bool = True
     securityweek_enabled: bool = True
+
+    @model_validator(mode="after")
+    def _require_strong_jwt_secret(self) -> "Settings":
+        weak = {None, "change-me-with-a-32-byte-secret"}
+        if self.jwt_secret in weak:
+            if self.app_env != "development":
+                raise ValueError("JWT_SECRET must be set to a random value of at least 32 characters")
+            warnings.warn(
+                "JWT_SECRET not set; using a random per-process secret (tokens reset on restart).",
+                stacklevel=2,
+            )
+            self.jwt_secret = secrets.token_urlsafe(48)
+        return self
 
 
 @lru_cache
