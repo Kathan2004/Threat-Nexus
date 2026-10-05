@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -29,18 +29,20 @@ class HTTPCollectorPlugin(CollectorPlugin):
             response.raise_for_status()
             payload = response.json()
         if isinstance(payload, list):
-            return payload
+            return cast(list[dict[str, Any]], payload)
         if isinstance(payload, dict):
             for key in ("items", "data", "results", "vulnerabilities"):
                 if isinstance(payload.get(key), list):
-                    return payload[key]
+                    return cast(list[dict[str, Any]], payload[key])
             return [payload]
         return []
 
     async def normalize(self, raw: dict[str, Any]) -> ThreatEvent:
         title = str(raw.get("title") or raw.get("name") or raw.get("cveID") or f"{self.name} intelligence")
         description = str(raw.get("description") or raw.get("summary") or raw.get("details") or title)
-        source = SourceAttribution(source=self.name, url=raw.get("url"), confidence=self.source_reputation, raw_reference=raw)
+        source = SourceAttribution(
+            source=self.name, url=raw.get("url"), confidence=self.source_reputation, raw_reference=raw
+        )
         event = ThreatEvent(title=title, description=description, severity=Severity.MEDIUM, sources=[source])
         if cve_id := raw.get("cveID") or raw.get("cve_id") or raw.get("id"):
             if isinstance(cve_id, str) and cve_id.upper().startswith("CVE-"):
@@ -76,7 +78,10 @@ class HTTPCollectorPlugin(CollectorPlugin):
             return PluginHealth(healthy=True, details={"mode": "configured-without-endpoint"})
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                response = await client.head(endpoint, headers=self.auth_headers(), auth=self.auth())
+                auth = self.auth()
+                response = await client.head(
+                    endpoint, headers=self.auth_headers(), auth=auth if auth is not None else httpx.USE_CLIENT_DEFAULT
+                )
             return PluginHealth(healthy=response.status_code < 500, details={"status_code": response.status_code})
         except Exception as exc:
             return PluginHealth(healthy=False, details={"error": str(exc)})

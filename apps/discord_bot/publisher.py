@@ -47,11 +47,19 @@ class DiscordPublisher:
             "MEDIUM": discord.Color.gold(),
             "LOW": discord.Color.green(),
         }[event.severity.value]
-        embed = discord.Embed(title=event.title, description=event.enrichment.executive_summary if event.enrichment else event.description, color=color)
+        embed = discord.Embed(
+            title=event.title,
+            description=event.enrichment.executive_summary if event.enrichment else event.description,
+            color=color,
+        )
         embed.add_field(name="Severity", value=event.severity.value, inline=True)
         embed.add_field(name="Confidence", value=f"{event.confidence}%", inline=True)
         embed.add_field(name="Active exploitation", value=str(event.active_exploitation), inline=True)
         if event.enrichment:
             embed.add_field(name="Recommendations", value="\n".join(event.enrichment.recommendations[:5]), inline=False)
-        embed.add_field(name="Sources", value="\n".join(sorted({source.source for source in event.sources})) or "internal", inline=False)
+        embed.add_field(
+            name="Sources",
+            value="\n".join(sorted({source.source for source in event.sources})) or "internal",
+            inline=False,
+        )
         return embed

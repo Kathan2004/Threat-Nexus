@@ -8,7 +8,7 @@ from core.config.settings import get_settings
 class Mongo:
     def __init__(self) -> None:
         settings = get_settings()
-        self.client = AsyncIOMotorClient(settings.mongodb_uri)
+        self.client: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongodb_uri)
         self.db = self.client[settings.mongodb_database]
 
     async def close(self) -> None:

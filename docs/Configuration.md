@@ -20,7 +20,9 @@ Then edit `.env` and fill in the values you have.
 
 These are needed for the platform itself:
 
-- `JWT_SECRET`: secret used to sign API tokens.
+- `JWT_SECRET`: secret used to sign API tokens. Required outside development, minimum 32 characters.
+- `ADMIN_USERNAME` / `ADMIN_PASSWORD`: first admin account, created only when no users exist.
+- `GRAFANA_ADMIN_PASSWORD`: Grafana admin password used by docker compose.
 - `MONGODB_URI`: MongoDB connection string.
 - `MONGODB_DATABASE`: MongoDB database name.
 - `REDIS_URL`: Redis connection string.

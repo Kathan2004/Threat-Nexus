@@ -8,7 +8,9 @@ from core.database.mongo import get_database
 from core.models.enums import Role
 from core.services.search import SearchService
 
-router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(require_roles(Role.ADMIN, Role.ANALYST, Role.VIEWER))])
+router = APIRouter(
+    prefix="/search", tags=["search"], dependencies=[Depends(require_roles(Role.ADMIN, Role.ANALYST, Role.VIEWER))]
+)
 
 
 @router.get("")

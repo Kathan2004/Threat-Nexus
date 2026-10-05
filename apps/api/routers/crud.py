@@ -13,7 +13,7 @@ from apps.api.dependencies import (
     relationship_repo,
 )
 from core.auth.security import require_roles
-from core.models.domain import Alert, CVE, Campaign, IOC, Malware, ThreatActor, ThreatEvent
+from core.models.domain import CVE, IOC, Alert, Campaign, Malware, ThreatActor, ThreatEvent
 from core.models.enums import Role
 from core.models.graph import Relationship
 from core.repositories.base import MongoRepository
@@ -47,12 +47,16 @@ async def events(
 
 
 @router.post("/events", response_model=ThreatEvent, dependencies=[Depends(require_roles(Role.ADMIN, Role.SERVICE))])
-async def create_event(event: ThreatEvent, repo: Annotated[MongoRepository[ThreatEvent], Depends(event_repo)]) -> ThreatEvent:
+async def create_event(
+    event: ThreatEvent, repo: Annotated[MongoRepository[ThreatEvent], Depends(event_repo)]
+) -> ThreatEvent:
     return await repo.upsert(event)
 
 
 @router.get("/alerts", response_model=Page[Alert], dependencies=[secured])
-async def alerts(repo: Annotated[MongoRepository[Alert], Depends(alert_repo)], limit: int = 50, offset: int = 0) -> Page[Alert]:
+async def alerts(
+    repo: Annotated[MongoRepository[Alert], Depends(alert_repo)], limit: int = 50, offset: int = 0
+) -> Page[Alert]:
     return await list_page(repo, limit, offset, "-created_at")
 
 
@@ -67,17 +71,23 @@ async def iocs(repo: Annotated[MongoRepository[IOC], Depends(ioc_repo)], limit: 
 
 
 @router.get("/actors", response_model=Page[ThreatActor], dependencies=[secured])
-async def actors(repo: Annotated[MongoRepository[ThreatActor], Depends(actor_repo)], limit: int = 50, offset: int = 0) -> Page[ThreatActor]:
+async def actors(
+    repo: Annotated[MongoRepository[ThreatActor], Depends(actor_repo)], limit: int = 50, offset: int = 0
+) -> Page[ThreatActor]:
     return await list_page(repo, limit, offset, "-created_at")
 
 
 @router.get("/campaigns", response_model=Page[Campaign], dependencies=[secured])
-async def campaigns(repo: Annotated[MongoRepository[Campaign], Depends(campaign_repo)], limit: int = 50, offset: int = 0) -> Page[Campaign]:
+async def campaigns(
+    repo: Annotated[MongoRepository[Campaign], Depends(campaign_repo)], limit: int = 50, offset: int = 0
+) -> Page[Campaign]:
     return await list_page(repo, limit, offset, "-created_at")
 
 
 @router.get("/malware", response_model=Page[Malware], dependencies=[secured])
-async def malware(repo: Annotated[MongoRepository[Malware], Depends(malware_repo)], limit: int = 50, offset: int = 0) -> Page[Malware]:
+async def malware(
+    repo: Annotated[MongoRepository[Malware], Depends(malware_repo)], limit: int = 50, offset: int = 0
+) -> Page[Malware]:
     return await list_page(repo, limit, offset, "-created_at")
 
 

@@ -1,5 +1,6 @@
-from apps.collectors.base_http import HTTPCollectorPlugin
 import httpx
+
+from apps.collectors.base_http import HTTPCollectorPlugin
 
 
 class CensysPlugin(HTTPCollectorPlugin):

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-uvicorn apps.api.main:app --host 0.0.0.0 --port 8000 --reload
+# Loopback only for local development. Use docker compose for anything else.
+uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --reload

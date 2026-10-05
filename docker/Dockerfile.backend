@@ -5,5 +5,8 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY core ./core
 COPY apps ./apps
-RUN pip install --no-cache-dir -e .
-CMD ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN pip install --no-cache-dir . \
+    && useradd --create-home --uid 10001 app
+USER app
+EXPOSE 8000
+CMD ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

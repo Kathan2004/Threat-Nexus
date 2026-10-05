@@ -7,8 +7,8 @@ from core.database.mongo import get_database
 from core.repositories.intel import (
     ActorRepository,
     AlertRepository,
-    CVERepository,
     CampaignRepository,
+    CVERepository,
     EventRepository,
     IOCRepository,
     MalwareRepository,

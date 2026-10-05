@@ -19,25 +19,51 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:800
 
 export default function SettingsPage() {
   const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [sources, setSources] = useState<SourceConfig[]>([]);
   const [selected, setSelected] = useState<SourceConfig | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [baseUrl, setBaseUrl] = useState("");
   const [credentials, setCredentials] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState("Enter an API bearer token to load source settings.");
+  const [status, setStatus] = useState("Sign in to load source settings.");
 
   const configuredCount = useMemo(
     () => sources.filter((source) => source.enabled && source.missing_credentials.length === 0).length,
     [sources],
   );
 
-  async function loadSources() {
-    if (!token) {
-      setStatus("Bearer token is required.");
+  async function signIn(event: FormEvent) {
+    event.preventDefault();
+    const response = await fetch(`${apiBaseUrl}/auth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    setPassword("");
+    if (!response.ok) {
+      setStatus(response.status === 429 ? "Too many attempts. Wait a minute." : "Invalid credentials.");
+      return;
+    }
+    const { access_token } = (await response.json()) as { access_token: string };
+    setToken(access_token);
+    await loadSources(access_token);
+  }
+
+  function signOut() {
+    setToken("");
+    setSources([]);
+    setSelected(null);
+    setStatus("Signed out.");
+  }
+
+  async function loadSources(bearer: string = token) {
+    if (!bearer) {
+      setStatus("Sign in first.");
       return;
     }
     const response = await fetch(`${apiBaseUrl}/settings/sources`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${bearer}` },
     });
     if (!response.ok) {
       setStatus(`Unable to load settings: ${response.status}`);
@@ -112,22 +138,44 @@ export default function SettingsPage() {
         <div className="grid gap-5 p-5 xl:grid-cols-[340px_1fr]">
           <section className="rounded-lg border border-border bg-panel">
             <div className="border-b border-border p-4">
-              <label className="text-sm text-slate-300" htmlFor="token">
-                API bearer token
-              </label>
-              <div className="mt-2 flex gap-2">
-                <input
-                  id="token"
-                  type="password"
-                  value={token}
-                  onChange={(event) => setToken(event.target.value)}
-                  className="min-w-0 flex-1 rounded-md border border-border bg-slate-950 px-3 py-2 text-sm outline-none focus:border-accent"
-                  placeholder="Paste token"
-                />
-                <button type="button" onClick={loadSources} className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-slate-950">
-                  Load
-                </button>
-              </div>
+              {token ? (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-slate-300">Signed in</span>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => loadSources()} className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-slate-950">
+                      Reload
+                    </button>
+                    <button type="button" onClick={signOut} className="rounded-md border border-border px-3 py-2 text-sm text-slate-300">
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={signIn} className="space-y-2">
+                  <input
+                    aria-label="Username"
+                    autoComplete="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    className="w-full rounded-md border border-border bg-slate-950 px-3 py-2 text-sm outline-none focus:border-accent"
+                    placeholder="Username"
+                    required
+                  />
+                  <input
+                    aria-label="Password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-md border border-border bg-slate-950 px-3 py-2 text-sm outline-none focus:border-accent"
+                    placeholder="Password"
+                    required
+                  />
+                  <button type="submit" className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-slate-950">
+                    Sign in
+                  </button>
+                </form>
+              )}
               <p className="mt-3 text-xs text-slate-400">{status}</p>
             </div>
 

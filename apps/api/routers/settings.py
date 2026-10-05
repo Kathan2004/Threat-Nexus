@@ -12,7 +12,9 @@ from core.services.source_config import SourceConfigService
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-@router.get("/sources", response_model=list[SourceConfigView], dependencies=[Depends(require_roles(Role.ADMIN, Role.ANALYST))])
+@router.get(
+    "/sources", response_model=list[SourceConfigView], dependencies=[Depends(require_roles(Role.ADMIN, Role.ANALYST))]
+)
 async def list_sources(db: Annotated[AsyncIOMotorDatabase, Depends(get_database)]) -> list[SourceConfigView]:
     return await SourceConfigService(db).list_sources()
 

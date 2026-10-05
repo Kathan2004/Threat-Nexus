@@ -1,25 +1,35 @@
+# Only the API, frontend and Grafana are published, and only on loopback.
+# Mongo, Redis and Prometheus stay on the internal compose network.
 services:
   mongo:
     image: mongo:7
-    ports: ["27017:27017"]
     volumes: ["mongo-data:/data/db"]
+    restart: unless-stopped
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    restart: unless-stopped
   api-service:
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
     env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379/0
     depends_on: [mongo, redis]
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
+    restart: unless-stopped
   scheduler-service:
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
     env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379/0
     depends_on: [redis, mongo]
     command: celery -A apps.scheduler.celery_app.celery_app worker -B --loglevel=INFO
+    restart: unless-stopped
   discord-service:
     build:
       context: .
@@ -27,17 +37,23 @@ services:
     env_file: .env
     depends_on: [api-service]
     command: python -m apps.discord_bot.main
+    restart: unless-stopped
   frontend:
     build:
       context: .
       dockerfile: docker/Dockerfile.frontend
-    ports: ["3000:3000"]
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
   prometheus:
     image: prom/prometheus
     volumes: ["./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
-    ports: ["9090:9090"]
   grafana:
     image: grafana/grafana
-    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports: ["127.0.0.1:3001:3000"]
 volumes:
   mongo-data:

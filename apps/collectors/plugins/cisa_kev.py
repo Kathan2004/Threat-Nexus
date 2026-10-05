@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from apps.collectors.base_http import HTTPCollectorPlugin
 
@@ -11,5 +11,5 @@ class CISAKEVPlugin(HTTPCollectorPlugin):
     async def collect(self) -> list[dict[str, Any]]:
         payload = await super().collect()
         if len(payload) == 1 and "vulnerabilities" in payload[0]:
-            return payload[0]["vulnerabilities"]
+            return cast(list[dict[str, Any]], payload[0]["vulnerabilities"])
         return payload

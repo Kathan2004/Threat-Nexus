@@ -34,8 +34,12 @@ class AggregationService:
         target.description = max([target.description, incoming.description], key=len)
         target.active_exploitation = target.active_exploitation or incoming.active_exploitation
         target.sources.extend(source for source in incoming.sources if source not in target.sources)
-        target.iocs.extend(ioc for ioc in incoming.iocs if ioc.value not in {existing.value for existing in target.iocs})
-        target.cves.extend(cve for cve in incoming.cves if cve.cve_id not in {existing.cve_id for existing in target.cves})
+        target.iocs.extend(
+            ioc for ioc in incoming.iocs if ioc.value not in {existing.value for existing in target.iocs}
+        )
+        target.cves.extend(
+            cve for cve in incoming.cves if cve.cve_id not in {existing.cve_id for existing in target.cves}
+        )
         target.threat_actor_ids = sorted(set(target.threat_actor_ids + incoming.threat_actor_ids))
         target.campaign_ids = sorted(set(target.campaign_ids + incoming.campaign_ids))
         target.malware_ids = sorted(set(target.malware_ids + incoming.malware_ids))

@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from core.models.domain import Alert, CVE, Campaign, IOC, Malware, ThreatActor, ThreatEvent
+from core.models.domain import CVE, IOC, Alert, Campaign, Malware, ThreatActor, ThreatEvent
 from core.models.graph import Relationship
 from core.repositories.base import MongoRepository
 
